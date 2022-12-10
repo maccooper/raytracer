@@ -1,5 +1,10 @@
 #include <iostream>
 #include <string>
+#include "./lib/mat.h"      //GLM Library code
+#include "./lib/vec.h"      //GLM Library code
+#include "./lib/invert.h"   //Course instructor code
+
+using namespace std;
 
 struct img_params {
     float near,
@@ -13,11 +18,16 @@ struct img_params {
     //vec light_list;
     //vec back;
     //vec ambient;
-    std::string output;    
+    string output;    
 };
 
 
+void parse_file(char *file_name) {
+
+}
+
 void save_imageP6(int Width, int Height, char* fname,unsigned char* pixels) {
+    //Code supplied from course instructor in Assignment 3
   FILE *fp;
   const int maxVal=255;
   
@@ -38,7 +48,7 @@ void save_imageP6(int Width, int Height, char* fname,unsigned char* pixels) {
   fclose(fp);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     std::cout <<"Hello World\n";
     return 0;
 

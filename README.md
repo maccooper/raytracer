@@ -28,7 +28,7 @@ OUTPUT \<name>
 
 #### To run this code, follow the procedure below:
 
-1. Compile with g++ raytracer.cpp -o raytracer.exe
+1. Compile with "make"
 1. Run with ./raytracer.exe \<file_name>
 
 
