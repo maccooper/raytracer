@@ -7,7 +7,7 @@ codebase written in C++, takes an input from a text file containing parameters t
 
 ## Example output based on testSpecular.txt
 
-![specular output](https://user-images.githubusercontent.com/26943573/206874720-c19ae8fc-bc02-4337-be21-768e20336b18.png "keySpecular.png")
+![specular output](https://user-images.githubusercontent.com/26943573/206874720-c19ae8fc-bc02-4337-be21-768e20336b18.png)
 
 ## Input File Format
 
