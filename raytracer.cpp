@@ -1,4 +1,21 @@
 #include <iostream>
+#include <string>
+
+struct img_params {
+    float near,
+          left,
+          right,
+          top,
+          bottom;
+    int rows,
+        cols;
+    //vec sphere_list;
+    //vec light_list;
+    //vec back;
+    //vec ambient;
+    std::string output;    
+};
+
 
 void save_imageP6(int Width, int Height, char* fname,unsigned char* pixels) {
   FILE *fp;
@@ -22,7 +39,7 @@ void save_imageP6(int Width, int Height, char* fname,unsigned char* pixels) {
 }
 
 int main() {
-    std::cout <<"Hello World";
+    std::cout <<"Hello World\n";
     return 0;
 
 }
