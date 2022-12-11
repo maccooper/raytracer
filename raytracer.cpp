@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "./lib/mat.h"      //GLM Library code
 #include "./lib/vec.h"      //GLM Library code
@@ -12,8 +13,8 @@ struct img_params {
           right,
           top,
           bottom;
-    int rows,
-        cols;
+    int resolution_rows,
+        resolution_cols;
     //vec sphere_list;
     //vec light_list;
     //vec back;
@@ -21,9 +22,35 @@ struct img_params {
     string output;    
 };
 
+img_params scene;
 
-void parse_file(char *file_name) {
-
+void parse_file(string file_name) {
+    string line;
+    size_t pos;
+    string token;
+    ifstream f(file_name);
+    if(!f) {
+        cout << "File does not exist\n";
+        return;
+    }
+    while(getline(f,line)) {
+        pos = line.find(" ");
+        token = line.substr(0,pos);
+        if(token == "NEAR") {
+            scene.near = stof(line.substr(pos));
+        } else if(token == "LEFT") {
+            scene.left = stof(line.substr(pos));
+        } else if(token == "RIGHT") {
+            scene.right = stof(line.substr(pos));
+        } else if(token == "TOP") {
+            scene.top = stof(line.substr(pos));
+        } else if(token == "BOTTOM") {
+            scene.bottom = stof(line.substr(pos));
+        } else if(token == "RES") {
+            //Fuck
+        }
+    }
+    f.close();
 }
 
 void save_imageP6(int Width, int Height, char* fname,unsigned char* pixels) {
@@ -49,7 +76,6 @@ void save_imageP6(int Width, int Height, char* fname,unsigned char* pixels) {
 }
 
 int main(int argc, char *argv[]) {
-    std::cout <<"Hello World\n";
+    parse_file(argv[1]);
     return 0;
-
 }
