@@ -1,9 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include "./lib/mat.h"      //GLM Library code
 #include "./lib/vec.h"      //GLM Library code
 #include "./lib/invert.h"   //Course instructor code
+#include <sstream>
 
 using namespace std;
 
@@ -25,29 +27,33 @@ struct img_params {
 img_params scene;
 
 void parse_file(string file_name) {
-    string line;
-    size_t pos;
-    string token;
     ifstream f(file_name);
     if(!f) {
         cout << "File does not exist\n";
         return;
     }
-    while(getline(f,line)) {
-        pos = line.find(" ");
-        token = line.substr(0,pos);
+    string line;
+    while(getline(f, line)) {  
+        stringstream s;
+        string token;
+        s << line;
+        s >> token;
         if(token == "NEAR") {
-            scene.near = stof(line.substr(pos));
+            s >> scene.near;
+            cout << "NEAR:" << scene.near << "\n";
         } else if(token == "LEFT") {
-            scene.left = stof(line.substr(pos));
+            s >> scene.left;
+            cout << scene.left << "\n";
         } else if(token == "RIGHT") {
-            scene.right = stof(line.substr(pos));
+            s >> scene.right;
+            cout << scene.left << "\n";
         } else if(token == "TOP") {
-            scene.top = stof(line.substr(pos));
+            s >> scene.top;
+            cout << scene.bottom << "\n";
         } else if(token == "BOTTOM") {
-            scene.bottom = stof(line.substr(pos));
+            s >> scene.bottom;
+            cout << scene.bottom << "\n";
         } else if(token == "RES") {
-            //Fuck
         }
     }
     f.close();
