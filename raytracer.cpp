@@ -12,9 +12,9 @@ using namespace std;
 
 struct Sphere {
     string name;
-    vec3 pos; //xyz
+    vec4 pos; //xyz
     vec3 scale; //scale<xyz>
-    vec3 colour; //RGB
+    vec4 colour; //RGBA
     float k_ambient, //K_a
           k_diffuse, //K_d
           k_specular, //K_s
@@ -27,6 +27,7 @@ struct Light {
     vec3 pos;
     vec3 intensity;
 };
+
 
 struct img_params {
     float near,
@@ -42,6 +43,21 @@ struct img_params {
     vec3 ambient;
     string output;    
 } scene;
+
+struct Ray {
+    vec3 origin;
+    vec3 direction;
+    int depth;
+};
+
+struct Intersection {
+    Ray ray;
+    Sphere sphere;
+    vec3 norm;
+    vec3 point;
+    float dist;
+    int is_inside;
+};
 
 void parse_file(string file_name) {
     ifstream f(file_name);
@@ -76,6 +92,7 @@ void parse_file(string file_name) {
             ss >> sphere.pos.x;
             ss >> sphere.pos.y;
             ss >> sphere.pos.z;
+            sphere.pos.w = 1.0f;
             //Scale
             ss >> sphere.scale.x;
             ss >> sphere.scale.y;
@@ -84,6 +101,7 @@ void parse_file(string file_name) {
             ss >> sphere.colour.x;
             ss >> sphere.colour.y;
             ss >> sphere.colour.z;
+            sphere.colour.w = 1.0f;
             //Reflection Coefficients
             ss >> sphere.k_ambient, //K_a
             ss >> sphere.k_diffuse, //K_d
@@ -126,6 +144,24 @@ void parse_file(string file_name) {
     }
     f.close();
 }
+
+Intersection compute_closest_intersections(Ray &ray) {
+    Intersection intersect;
+    intersect.ray = ray;
+    return intersect;
+}
+
+
+vec3 ray_trace(Ray &r) {
+    if(r.depth > 2) {
+        //return black
+        return vec3(0,0,0);
+    }
+    // p = closest intersection of ray with all objects
+    
+    return vec3(1,1,1);
+}
+
 
 void save_imageP6(int Width, int Height, char* fname,unsigned char* pixels) {
     //Code supplied from course instructor in Assignment 3
