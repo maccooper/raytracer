@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include "./lib/mat.h"      //GLM Library code
 #include "./lib/vec.h"      //GLM Library code
@@ -14,11 +15,17 @@ struct Sphere {
     vec3 pos; //xyz
     vec3 scale; //scale<xyz>
     vec3 colour; //RGB
-    float ka,
-          kd,
-          ks,
-          kr;
-    int n;
+    float k_ambient, //K_a
+          k_diffuse, //K_d
+          k_specular, //K_s
+          k_fresnel; //K_r
+    int specular_exp; //n
+};
+
+struct Light {
+    string name;
+    vec3 pos;
+    vec3 intensity;
 };
 
 struct img_params {
@@ -30,9 +37,9 @@ struct img_params {
     int resolution_rows,
         resolution_cols;
     vector<Sphere> s_list;
-    //vec<light/> light_list;
-    //vec back;
-    //vec ambient;
+    vector<Light> l_list;
+    vec3 back;
+    vec3 ambient;
     string output;    
 } scene;
 
@@ -44,38 +51,78 @@ void parse_file(string file_name) {
     }
     string line;
     while(getline(f, line)) {  
-        stringstream s;
+        stringstream ss;
         string token;
-        s << line;
-        s >> token;
+        ss << line;
+        ss >> token;
         if(token == "NEAR") {
-            s >> scene.near;
+            ss >> scene.near;
         } else if(token == "LEFT") {
-            s >> scene.left;
+            ss >> scene.left;
         } else if(token == "RIGHT") {
-            s >> scene.right;
+            ss >> scene.right;
         } else if(token == "TOP") {
-            s >> scene.top;
+            ss >> scene.top;
         } else if(token == "BOTTOM") {
-            s >> scene.bottom;
+            ss >> scene.bottom;
         } else if(token == "RES") {
-            s >> scene.resolution_rows;
-            s >> scene.resolution_cols;
+            ss >> scene.resolution_rows;
+            ss >> scene.resolution_cols;
         } else if(token == "SPHERE") {
-            cout << "sphere line" << "\n";
+            Sphere sphere;
+            //Name
+            ss >> sphere.name;
+            //Position
+            ss >> sphere.pos.x;
+            ss >> sphere.pos.y;
+            ss >> sphere.pos.z;
+            //Scale
+            ss >> sphere.scale.x;
+            ss >> sphere.scale.y;
+            ss >> sphere.scale.z;
+            //Colour
+            ss >> sphere.colour.x;
+            ss >> sphere.colour.y;
+            ss >> sphere.colour.z;
+            //Reflection Coefficients
+            ss >> sphere.k_ambient, //K_a
+            ss >> sphere.k_diffuse, //K_d
+            ss >> sphere.k_specular, //K_s
+            ss >> sphere.k_fresnel; //K_r
+            //Specular Exponent
+            ss >> sphere.specular_exp;
+            //Add sphere to list
+            scene.s_list.push_back(sphere);
         } else if(token == "LIGHT") {
-            cout << "Light Line" << "\n";
+            Light light;
+            //Name
+            ss >> light.name;
+            //Position
+            ss >> light.pos.x;
+            ss >> light.pos.y;
+            ss >> light.pos.z;
+            //Intensity
+            ss >> light.intensity.x;
+            ss >> light.intensity.y;
+            ss >> light.intensity.z;
+            //Add Light to list
+            scene.l_list.push_back(light);
         } else if(token == "BACK") {
-            cout << "Back Line" << "\n";
+            //cout << "Back Line" << "\n";
+            ss >> scene.back.x;
+            ss >> scene.back.y;
+            ss >> scene.back.z;
         } else if(token == "AMBIENT") {
+            ss >> scene.ambient.x;
+            ss >> scene.ambient.y;
+            ss >> scene.ambient.z;
         } else if(token == "OUTPUT") {
-            s >> scene.output;
+            ss >> scene.output;
             if ((scene.output).length() < 20) {
             } else {
                 cout << "Error on input file, output name specified is too large" << "\n";
             }
         }
-
     }
     f.close();
 }
@@ -104,5 +151,8 @@ void save_imageP6(int Width, int Height, char* fname,unsigned char* pixels) {
 
 int main(int argc, char *argv[]) {
     parse_file(argv[1]);
+    for (int i = 0; i < scene.l_list.size(); i++) {
+            cout << scene.ambient.x<< "\n";
+    }
     return 0;
 }
