@@ -9,6 +9,18 @@
 
 using namespace std;
 
+struct Sphere {
+    string name;
+    vec3 pos; //xyz
+    vec3 scale; //scale<xyz>
+    vec3 colour; //RGB
+    float ka,
+          kd,
+          ks,
+          kr;
+    int n;
+};
+
 struct img_params {
     float near,
           left,
@@ -17,14 +29,12 @@ struct img_params {
           bottom;
     int resolution_rows,
         resolution_cols;
-    //vec sphere_list;
-    //vec light_list;
+    vector<Sphere> s_list;
+    //vec<light/> light_list;
     //vec back;
     //vec ambient;
     string output;    
-};
-
-img_params scene;
+} scene;
 
 void parse_file(string file_name) {
     ifstream f(file_name);
@@ -40,21 +50,32 @@ void parse_file(string file_name) {
         s >> token;
         if(token == "NEAR") {
             s >> scene.near;
-            cout << "NEAR:" << scene.near << "\n";
         } else if(token == "LEFT") {
             s >> scene.left;
-            cout << scene.left << "\n";
         } else if(token == "RIGHT") {
             s >> scene.right;
-            cout << scene.left << "\n";
         } else if(token == "TOP") {
             s >> scene.top;
-            cout << scene.bottom << "\n";
         } else if(token == "BOTTOM") {
             s >> scene.bottom;
-            cout << scene.bottom << "\n";
         } else if(token == "RES") {
+            s >> scene.resolution_rows;
+            s >> scene.resolution_cols;
+        } else if(token == "SPHERE") {
+            cout << "sphere line" << "\n";
+        } else if(token == "LIGHT") {
+            cout << "Light Line" << "\n";
+        } else if(token == "BACK") {
+            cout << "Back Line" << "\n";
+        } else if(token == "AMBIENT") {
+        } else if(token == "OUTPUT") {
+            s >> scene.output;
+            if ((scene.output).length() < 20) {
+            } else {
+                cout << "Error on input file, output name specified is too large" << "\n";
+            }
         }
+
     }
     f.close();
 }
