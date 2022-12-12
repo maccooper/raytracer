@@ -5,7 +5,6 @@
 #include <vector>
 #include "./lib/mat.h"      //GLM Library code
 #include "./lib/vec.h"      //GLM Library code
-//#include "./lib/invert.h"   //Course instructor code
 #include <sstream>
 
 using namespace std;
@@ -14,7 +13,8 @@ struct Sphere {
     string name;
     vec4 pos; 
     vec3 scale; 
-    vec4 colour; //RGBA
+    vec4 colour; 
+    //coefficients
     float k_ambient, //K_a
           k_diffuse, //K_d
           k_specular, //K_s
@@ -147,7 +147,7 @@ void parse_file(string file_name) {
     f.close();
 }
 
-Intersection compute_closest_intersection(Ray &ray) {
+Intersection compute_closest_intersection(Ray ray) {
     Intersection intersect;
     intersect.ray = ray;
     intersect.distance = -1;
@@ -197,31 +197,30 @@ Intersection compute_closest_intersection(Ray &ray) {
     return intersect;
 }
 
-vec4 ray_trace(Ray &r) {
+vec4 ray_trace(Ray r) {
     Intersection intersect = compute_closest_intersection(r);
-    if(r.depth > 2) {
-        //return black
-        return vec4(0,0,0,0);
+    vec4 black = (0,0,0,0);
+    if(r.depth >= 3) {
+        return black;
     } else if (intersect.distance == -1 && r.depth == 0) {
         return scene.back;
     } else if (intersect.distance == - 1) {
-        return vec4(0,0,0,0);
+        return black;
     } else {
-        vec4 diffuse = (0,0,0,0);
-        vec4 specular = (0,0,0,0);
+        vec4 diffuse = black;
+        vec4 specular = black;
         for(int i = 0; i < scene.l_list.size(); i++) {
             Ray rn;
             rn.origin = intersect.point;
             rn.direction = normalize(scene.l_list[i].pos - intersect.point);
-
-            Intersection light_ray_intersect = compute_closest_intersection(rn);
+            Intersection lr = compute_closest_intersection(rn);
             vec4 h = normalize(rn.direction - r.direction);
-            float s_strength = dot(intersect.norm, h);
-            float d_strength = dot(intersect.norm, rn.direction);
-            if (light_ray_intersect.distance == -1) {
-                if(d_strength > 0) {
-                    diffuse += d_strength * scene.l_list[i].intensity * intersect.sphere.colour;
-                    specular += powf(powf(s_strength, intersect.sphere.specular_exp), 5) * scene.l_list[i].intensity;
+            float specular_strength = dot(intersect.norm, h);
+            float diffuse_strength = dot(intersect.norm, rn.direction);
+            if (lr.distance == -1) {
+                if(diffuse_strength > 0) {
+                    diffuse += diffuse_strength * scene.l_list[i].intensity * intersect.sphere.colour;
+                    specular += powf(powf(specular_strength, intersect.sphere.specular_exp), 5) * scene.l_list[i].intensity;
                 }
             }
         }
@@ -229,7 +228,7 @@ vec4 ray_trace(Ray &r) {
         r_reflection.origin = intersect.point;
         r_reflection.direction = normalize(r.direction - 2.0f * dot(intersect.norm, r.direction) * intersect.norm);
         r_reflection.depth = r.depth+1;
-        vec4 colour = intersect.sphere.colour * intersect.sphere.k_ambient*scene.ambient + diffuse * intersect.sphere.k_diffuse + specular * intersect.sphere.k_specular + ray_trace(r_reflection) * intersect.sphere.k_fresnel;
+        vec4 colour = intersect.sphere.colour * intersect.sphere.k_ambient * scene.ambient + diffuse * intersect.sphere.k_diffuse + specular * intersect.sphere.k_specular + ray_trace(r_reflection) * intersect.sphere.k_fresnel;
         colour.w = 1.0f;
 
         return colour;
