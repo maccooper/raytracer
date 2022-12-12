@@ -30,6 +30,7 @@ struct Light {
 };
 
 struct img_params {
+    //Struct for containing raw info read from input file
     float near,
           left,
           right,
@@ -37,8 +38,8 @@ struct img_params {
           bottom;
     int resolution_rows,
         resolution_cols;
-    vector<Sphere> s_list;
-    vector<Light> l_list;
+    vector<Sphere> s_list;  //tracks our sphere objs
+    vector<Light> l_list;   //Tracks light objs
     vec4 back;
     vec4 ambient;
     string output;    
@@ -60,6 +61,11 @@ struct Intersection {
 };
 
 void parse_file(string file_name) {
+    //File parsing function using stringstream, inspired by examples by
+    //https://www.softwaretestinghelp.com/stringstream-class-in-cpp/
+    
+    //Input:    .txt file (according to syntax specified by assignment documentation)
+    //Output:   structs containing info from file, relevant to our ray-tracing alg. Including:
     ifstream f(file_name);
     if(!f) {
         cout << "File does not exist\n";
@@ -86,7 +92,7 @@ void parse_file(string file_name) {
             ss >> scene.resolution_cols;
         } else if(token == "SPHERE") {
             Sphere sphere;
-            //Name
+            //Instance Name
             ss >> sphere.name;
             //Position
             ss >> sphere.pos.x;
@@ -102,14 +108,14 @@ void parse_file(string file_name) {
             ss >> sphere.colour.y;
             ss >> sphere.colour.z;
             sphere.colour.w = 1.0f;
-            //Reflection Coefficients
+            //Coefficients
             ss >> sphere.k_ambient, //K_a
             ss >> sphere.k_diffuse, //K_d
             ss >> sphere.k_specular, //K_s
             ss >> sphere.k_fresnel; //K_r
             //Specular Exponent
             ss >> sphere.specular_exp;
-            //Compute Inverse
+            //Compute Inverse using invert matrix from GLM library
             InvertMatrix(Scale(sphere.scale), sphere.inverse); 
             //Add sphere to list
             scene.s_list.push_back(sphere);
@@ -130,7 +136,6 @@ void parse_file(string file_name) {
             //Add Light to list
             scene.l_list.push_back(light);
         } else if(token == "BACK") {
-            //cout << "Back Line" << "\n";
             ss >> scene.back.x;
             ss >> scene.back.y;
             ss >> scene.back.z;
@@ -158,24 +163,25 @@ Intersection compute_closest_intersection(Ray ray) {
     intersect.is_inside = 0;
 
     for (int i = 0; i < scene.s_list.size(); i++) {
+        //set up equations using quadratic formula derivation from course ray_tracing slides
         float a = dot(scene.s_list[i].inverse * ray.direction, scene.s_list[i].inverse * ray.direction);
         float b = dot(scene.s_list[i].inverse * (scene.s_list[i].pos - ray.origin), scene.s_list[i].inverse * ray.direction);
         float c = dot(scene.s_list[i].inverse * (scene.s_list[i].pos - ray.origin), scene.s_list[i].inverse * (scene.s_list[i].pos - ray.origin)) - 1;
         float q;
-        float discriminant = b*b-a*c;
+        float disc = b*b-a*c;
         //if b^2 -ac = 0; one soln
         //<0, no soln
         //>0, two soln
-        float soln1 = (b-sqrtf(discriminant)) / a;
-        float soln2 = (b+sqrtf(discriminant)) /a;
+        float soln1 = (b-sqrtf(disc)) / a; 
+        float soln2 = (b+sqrtf(disc)) /a; 
         int inside_flag = 0;
-        if(discriminant > 0) {
+        if(disc > 0) {
             q = min(soln1,soln2);
             if(q <= 0.0001 || (ray.depth == 0 && q <= 1)) {
                 q = max(soln1,soln2);
                 inside_flag = 1;
             }
-        } else if (discriminant < 0) {
+        } else if (disc < 0) {
             continue;
         } 
         if (q <= 0.0001 || (ray.depth == 0 && q <= 1)) {
@@ -241,22 +247,22 @@ vec4 ray_trace(Ray r) {
 
 void save_imageP6(int Width, int Height, const char* fname,unsigned char* pixels) {
     //Code supplied from course instructor in Assignment 3
-  FILE *fp;
-  const int maxVal=255;
+    FILE *fp;
+    const int maxVal=255;
   
-  printf("Saving image %s: %d x %d\n", fname,Width,Height);
-  fp = fopen(fname,"wb");
-  if (!fp) {
+    printf("Saving image %s: %d x %d\n", fname,Width,Height);
+    fp = fopen(fname,"wb");
+    if (!fp) {
         printf("Unable to open file '%s'\n",fname);
         return;
-  }
-  fprintf(fp, "P6\n");
-  fprintf(fp, "%d %d\n", Width, Height);
-  fprintf(fp, "%d\n", maxVal);
+    }
+    fprintf(fp, "P6\n");
+    fprintf(fp, "%d %d\n", Width, Height);
+    fprintf(fp, "%d\n", maxVal);
 
-  for(int j = 0; j < Height; j++) {
-		  fwrite(&pixels[j*Width*3], 3,Width,fp);
-  }
+    for(int j = 0; j < Height; j++) {
+        fwrite(&pixels[j*Width*3], 3,Width,fp);
+    }
 
   fclose(fp);
 }
