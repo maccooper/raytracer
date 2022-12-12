@@ -121,10 +121,12 @@ void parse_file(string file_name) {
             ss >> light.pos.x;
             ss >> light.pos.y;
             ss >> light.pos.z;
+            light.pos.w = 1.0f;
             //Intensity
             ss >> light.intensity.x;
             ss >> light.intensity.y;
             ss >> light.intensity.z;
+            light.intensity.w = 1.0f;
             //Add Light to list
             scene.l_list.push_back(light);
         } else if(token == "BACK") {
@@ -132,10 +134,12 @@ void parse_file(string file_name) {
             ss >> scene.back.x;
             ss >> scene.back.y;
             ss >> scene.back.z;
+            scene.back.w = 1.0f;
         } else if(token == "AMBIENT") {
             ss >> scene.ambient.x;
             ss >> scene.ambient.y;
             ss >> scene.ambient.z;
+            scene.ambient.w = 1.0f;
         } else if(token == "OUTPUT") {
             ss >> scene.output;
             if (scene.output.length() > 20) {
