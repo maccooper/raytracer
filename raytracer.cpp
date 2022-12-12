@@ -3,9 +3,9 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <sstream>
 #include "./lib/mat.h"      //GLM Library code
 #include "./lib/vec.h"      //GLM Library code
-#include <sstream>
 
 using namespace std;
 
@@ -30,7 +30,7 @@ struct Light {
 };
 
 struct img_params {
-    //Struct for containing raw info read from input file
+    //struct for containing info read from input file
     float near,
           left,
           right,
@@ -39,7 +39,7 @@ struct img_params {
     int resolution_rows,
         resolution_cols;
     vector<Sphere> s_list;  //tracks our sphere objs
-    vector<Light> l_list;   //Tracks light objs
+    vector<Light> l_list;   //tracks light objs
     vec4 back;
     vec4 ambient;
     string output;    
@@ -61,9 +61,7 @@ struct Intersection {
 };
 
 void parse_file(string file_name) {
-    //File parsing function using stringstream, inspired by examples by
-    //https://www.softwaretestinghelp.com/stringstream-class-in-cpp/
-    
+    //File parsing function using stringstream
     //Input:    .txt file (according to syntax specified by assignment documentation)
     //Output:   structs containing info from file, relevant to our ray-tracing alg. Including:
     ifstream f(file_name);
@@ -208,37 +206,37 @@ Intersection compute_closest_intersection(Ray ray) {
 }
 
 vec4 ray_trace(Ray r) {
-    Intersection intersect = compute_closest_intersection(r);
+    Intersection p = compute_closest_intersection(r);
     vec4 black = (0,0,0,0);
     if(r.depth >= 3) {
         return black;
-    } else if (intersect.distance == -1 && r.depth == 0) {
+    } else if (p.distance == -1 && r.depth == 0) {
         return scene.back;
-    } else if (intersect.distance == - 1) {
+    } else if (p.distance == - 1) {
         return black;
     } else {
         vec4 diffuse = black;
         vec4 specular = black;
         for(int i = 0; i < scene.l_list.size(); i++) {
             Ray rn;
-            rn.origin = intersect.point;
-            rn.direction = normalize(scene.l_list[i].pos - intersect.point);
+            rn.origin = p.point;
+            rn.direction = normalize(scene.l_list[i].pos - p.point);
             Intersection lr = compute_closest_intersection(rn);
             vec4 h = normalize(rn.direction - r.direction);
-            float specular_strength = dot(intersect.norm, h);
-            float diffuse_strength = dot(intersect.norm, rn.direction);
+            float specular_strength = dot(p.norm, h);
+            float diffuse_strength = dot(p.norm, rn.direction);
             if (lr.distance == -1) {
                 if(diffuse_strength > 0) {
-                    diffuse += diffuse_strength * scene.l_list[i].intensity * intersect.sphere.colour;
-                    specular += powf(powf(specular_strength, intersect.sphere.specular_exp), 5) * scene.l_list[i].intensity;
+                    diffuse += diffuse_strength * scene.l_list[i].intensity * p.sphere.colour;
+                    specular += powf(powf(specular_strength, p.sphere.specular_exp), 5) * scene.l_list[i].intensity;
                 }
             }
         }
         Ray r_reflection;
-        r_reflection.origin = intersect.point;
-        r_reflection.direction = normalize(r.direction - 2.0f * dot(intersect.norm, r.direction) * intersect.norm);
+        r_reflection.origin = p.point;
+        r_reflection.direction = normalize(r.direction - 2.0f * dot(p.norm, r.direction) * p.norm);
         r_reflection.depth = r.depth+1;
-        vec4 colour = intersect.sphere.colour * intersect.sphere.k_ambient * scene.ambient + diffuse * intersect.sphere.k_diffuse + specular * intersect.sphere.k_specular + ray_trace(r_reflection) * intersect.sphere.k_fresnel;
+        vec4 colour = p.sphere.colour * p.sphere.k_ambient * scene.ambient + diffuse * p.sphere.k_diffuse + specular * p.sphere.k_specular + ray_trace(r_reflection) * p.sphere.k_fresnel;
         colour.w = 1.0f;
 
         return colour;
@@ -246,7 +244,7 @@ vec4 ray_trace(Ray r) {
 }
 
 void save_imageP6(int Width, int Height, const char* fname,unsigned char* pixels) {
-    //Code supplied from course instructor in Assignment 3
+    //Code supplied from course instructor in ppm
     FILE *fp;
     const int maxVal=255;
   
@@ -278,30 +276,28 @@ void render() {
             float x = scene.left + ((float) j / scene.resolution_rows) * (scene.right - scene.left);
             float y = scene.bottom + ((float) i / scene.resolution_cols) * (scene.top - scene.bottom);
             Ray r;
-            r.origin = vec4(0.0f,0.0f,0.0f,1.0f);
-            r.direction = vec4(x,y, -scene.near, 0.0f);
+            r.origin = vec4(0,0,0,1);
+            r.direction = vec4(x,y, -scene.near, 0);
             r.depth = 0;
             vec4 p_colour = ray_trace(r);
             pixel_colours[(scene.resolution_cols - i - 1) * scene.resolution_rows + j] = p_colour;
-    }
-    for (int i = 0; i < scene.resolution_cols; i++) {
-        for (int j = 0; j < scene.resolution_rows; j++) {
-            for (int k = 0; k < 3; k++) {
-                if(((float*) pixel_colours[i * scene.resolution_rows + j])[k] < 0) {
-                    ((float*) pixel_colours[i * scene.resolution_rows + j])[k] *= -1;
+        }
+        for (int i = 0; i < scene.resolution_cols; i++) {
+            for (int j = 0; j < scene.resolution_rows; j++) {
+                for (int k = 0; k < 3; k++) {
+                    if(pixel_colours[i * scene.resolution_rows + j][k] < 0) {
+                        pixel_colours[i * scene.resolution_rows + j][k] = -1;
+                    } 
+                    if(pixel_colours[i * scene.resolution_rows + j][k] > 1) {
+                        pixel_colours[i * scene.resolution_rows + j][k] = 1;
+                    }
+                    pixels[i * scene.resolution_rows * 3 + j * 3 + k] = (pixel_colours[i * scene.resolution_rows + j])[k] * 255.9f;
                 }
-                if(((float*) pixel_colours[i * scene.resolution_rows + j])[k] > 1) {
-                    ((float*) pixel_colours[i * scene.resolution_rows + j])[k] = 1;
-                }
-                pixels[i * scene.resolution_rows * 3 + j * 3 + k] = (unsigned char) (((float*) pixel_colours[i * scene.resolution_rows + j])[k] * 255.9f);
             }
         }
     }
-        //string temp = scene.output;
-    }
-    save_imageP6(scene.resolution_rows, scene.resolution_cols, scene.output.c_str(),pixels);                                                               
+    save_imageP6(scene.resolution_rows, scene.resolution_cols, scene.output.c_str(),pixels);
     return;
-
 }
 
 int main(int argc, char *argv[]) {
