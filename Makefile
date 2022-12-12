@@ -20,4 +20,4 @@ raytracer: $(OBJ)
 
 
 clean:
-	-rm -rf obj/ raytracer.exe *.ppm
+	-rm -rf obj/ raytracer.exe
