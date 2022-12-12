@@ -12,8 +12,8 @@ using namespace std;
 
 struct Sphere {
     string name;
-    vec4 pos; //xyz
-    vec3 scale; //scale<xyz>
+    vec4 pos; 
+    vec3 scale; 
     vec4 colour; //RGBA
     float k_ambient, //K_a
           k_diffuse, //K_d
@@ -28,7 +28,6 @@ struct Light {
     vec4 pos;
     vec4 intensity;
 };
-
 
 struct img_params {
     float near,
@@ -110,7 +109,7 @@ void parse_file(string file_name) {
             ss >> sphere.k_fresnel; //K_r
             //Specular Exponent
             ss >> sphere.specular_exp;
-            //Compute Inverse using invert.cpp
+            //Compute Inverse
             InvertMatrix(Scale(sphere.scale), sphere.inverse); 
             //Add sphere to list
             scene.s_list.push_back(sphere);
@@ -138,15 +137,11 @@ void parse_file(string file_name) {
             ss >> scene.ambient.y;
             ss >> scene.ambient.z;
         } else if(token == "OUTPUT") {
-            string temp;
-            ss >> temp;
-            //scene.output;
-            if (temp.length() < 20) {
-            } else {
+            ss >> scene.output;
+            if (scene.output.length() > 20) {
                 cout << "Error on input file, output name specified is too large" << "\n";
                 return;
             }
-            scene.output = temp;
         }
     }
     f.close();
@@ -164,52 +159,40 @@ Intersection compute_closest_intersection(Ray &ray) {
         float c = dot(scene.s_list[i].inverse * (scene.s_list[i].pos - ray.origin), scene.s_list[i].inverse * (scene.s_list[i].pos - ray.origin)) - 1;
         float q;
         float discriminant = b*b-a*c;
+        //if b^2 -ac = 0; one soln
+        //<0, no soln
+        //>0, two soln
         float soln1 = (b-sqrtf(discriminant)) / a;
         float soln2 = (b+sqrtf(discriminant)) /a;
-
-        int inside_check = 0;
-
+        int inside_flag = 0;
         if(discriminant > 0) {
-            if(soln1 > soln2) {
-                q = soln2;
-            } else {
-                q = soln1;
-            }
-            if(q <= 0.0001f || ray.depth == 0 && q <= 1.0f) {
-                if(soln1 > soln2) {
-                    q = soln1;
-                } else {
-                    q = soln2;
-                }
-                inside_check = 1;
+            q = min(soln1,soln2);
+            if(q <= 0.0001 || (ray.depth == 0 && q <= 1)) {
+                q = max(soln1,soln2);
+                inside_flag = 1;
             }
         } else if (discriminant < 0) {
             continue;
         } 
-        if (q <= 0.0001f || (ray.depth == 0 && q <= 1.0f)) {
+        if (q <= 0.0001 || (ray.depth == 0 && q <= 1)) {
             continue;
         }
-        if((intersect.distance == -1 || q < intersect.distance)) {
+        if(intersect.distance == -1 || q < intersect.distance) {
             intersect.distance = q;
             intersect.sphere = scene.s_list[i];
-            intersect.is_inside = inside_check;
+            intersect.is_inside = inside_flag;
         }
     }
     if (intersect.distance != -1) {
         intersect.point = ray.origin + ray.direction * intersect.distance;
+        vec4 norm = intersect.point - intersect.sphere.pos;
         if (intersect.is_inside) {
-            vec4 norm = -(intersect.point - intersect.sphere.pos);
-            mat4 inverse_transpose = transpose(intersect.sphere.inverse);
-            norm = inverse_transpose * intersect.sphere.inverse * norm;
-            norm.w = 0;
-            intersect.norm = normalize(norm);
-        } else {
-            vec4 norm = intersect.point - intersect.sphere.pos;
-            mat4 inverse_transpose = transpose(intersect.sphere.inverse);
-            norm = inverse_transpose * intersect.sphere.inverse * norm;
-            norm.w = 0;
-            intersect.norm = normalize(norm);
+            vec4 norm = -norm;
         }
+        mat4 inverse_transpose = transpose(intersect.sphere.inverse);
+        norm = inverse_transpose * intersect.sphere.inverse * norm;
+        norm.w = 0;
+        intersect.norm = normalize(norm);
     }
     return intersect;
 }
@@ -246,7 +229,7 @@ vec4 ray_trace(Ray &r) {
         r_reflection.origin = intersect.point;
         r_reflection.direction = normalize(r.direction - 2.0f * dot(intersect.norm, r.direction) * intersect.norm);
         r_reflection.depth = r.depth+1;
-        vec4 colour = intersect.sphere.colour * intersect.sphere.k_ambient + diffuse * intersect.sphere.k_diffuse + specular * intersect.sphere.k_specular + ray_trace(r_reflection) * intersect.sphere.k_fresnel;
+        vec4 colour = intersect.sphere.colour * intersect.sphere.k_ambient*scene.ambient + diffuse * intersect.sphere.k_diffuse + specular * intersect.sphere.k_specular + ray_trace(r_reflection) * intersect.sphere.k_fresnel;
         colour.w = 1.0f;
 
         return colour;
