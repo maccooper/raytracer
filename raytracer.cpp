@@ -92,7 +92,7 @@ void parse_file(string file_name) {
             ss >> sphere.pos.x;
             ss >> sphere.pos.y;
             ss >> sphere.pos.z;
-            sphere.pos.w = 1.0f;
+            sphere.pos.w = 1;
             //Scale
             ss >> sphere.scale.x;
             ss >> sphere.scale.y;
@@ -101,7 +101,7 @@ void parse_file(string file_name) {
             ss >> sphere.colour.x;
             ss >> sphere.colour.y;
             ss >> sphere.colour.z;
-            sphere.colour.w = 1.0f;
+            sphere.colour.w = 1;
             //Reflection Coefficients
             ss >> sphere.k_ambient, //K_a
             ss >> sphere.k_diffuse, //K_d
@@ -121,12 +121,12 @@ void parse_file(string file_name) {
             ss >> light.pos.x;
             ss >> light.pos.y;
             ss >> light.pos.z;
-            light.pos.w = 1.0f;
+            light.pos.w = 1;
             //Intensity
             ss >> light.intensity.x;
             ss >> light.intensity.y;
             ss >> light.intensity.z;
-            light.intensity.w = 1.0f;
+            light.intensity.w = 1;
             //Add Light to list
             scene.l_list.push_back(light);
         } else if(token == "BACK") {
@@ -134,12 +134,12 @@ void parse_file(string file_name) {
             ss >> scene.back.x;
             ss >> scene.back.y;
             ss >> scene.back.z;
-            scene.back.w = 1.0f;
+            scene.back.w = 1;
         } else if(token == "AMBIENT") {
             ss >> scene.ambient.x;
             ss >> scene.ambient.y;
             ss >> scene.ambient.z;
-            scene.ambient.w = 1.0f;
+            scene.ambient.w = 1;
         } else if(token == "OUTPUT") {
             ss >> scene.output;
             if (scene.output.length() > 20) {
@@ -204,7 +204,7 @@ Intersection compute_closest_intersection(Ray ray) {
 vec4 ray_trace(Ray r) {
     Intersection intersect = compute_closest_intersection(r);
     vec4 black = (0,0,0,0);
-    if(r.depth >= 3) {
+    if(r.depth > 2) {
         return black;
     } else if (intersect.distance == -1 && r.depth == 0) {
         return scene.back;
@@ -230,10 +230,10 @@ vec4 ray_trace(Ray r) {
         }
         Ray r_reflection;
         r_reflection.origin = intersect.point;
-        r_reflection.direction = normalize(r.direction - 2.0f * dot(intersect.norm, r.direction) * intersect.norm);
+        r_reflection.direction = normalize(r.direction - 2 * dot(intersect.norm, r.direction) * intersect.norm);
         r_reflection.depth = r.depth+1;
         vec4 colour = intersect.sphere.colour * intersect.sphere.k_ambient * scene.ambient + diffuse * intersect.sphere.k_diffuse + specular * intersect.sphere.k_specular + ray_trace(r_reflection) * intersect.sphere.k_fresnel;
-        colour.w = 1.0f;
+        colour.w = 1;
 
         return colour;
     }
@@ -272,30 +272,28 @@ void render() {
             float x = scene.left + ((float) j / scene.resolution_rows) * (scene.right - scene.left);
             float y = scene.bottom + ((float) i / scene.resolution_cols) * (scene.top - scene.bottom);
             Ray r;
-            r.origin = vec4(0.0f,0.0f,0.0f,1.0f);
-            r.direction = vec4(x,y, -scene.near, 0.0f);
+            r.origin = vec4(0,0,0,1);
+            r.direction = vec4(x,y, -scene.near, 0);
             r.depth = 0;
             vec4 p_colour = ray_trace(r);
             pixel_colours[(scene.resolution_cols - i - 1) * scene.resolution_rows + j] = p_colour;
     }
-    for (int i = 0; i < scene.resolution_cols; i++) {
-        for (int j = 0; j < scene.resolution_rows; j++) {
-            for (int k = 0; k < 3; k++) {
-                if(((float*) pixel_colours[i * scene.resolution_rows + j])[k] < 0) {
-                    ((float*) pixel_colours[i * scene.resolution_rows + j])[k] *= -1;
+        for (int i = 0; i < scene.resolution_cols; i++) {
+            for (int j = 0; j < scene.resolution_rows; j++) {
+                for (int k = 0; k < 3; k++) {
+                    if((pixel_colours[i * scene.resolution_rows + j])[k] < 0) {
+                        (pixel_colours[i * scene.resolution_rows + j])[k] *= -1;
+                    }
+                    if((pixel_colours[i * scene.resolution_rows + j])[k] > 1) {
+                        (pixel_colours[i * scene.resolution_rows + j])[k] = 1;
+                    }
+                    pixels[i * scene.resolution_rows * 3 + j * 3 + k] = (unsigned char) ((pixel_colours[i * scene.resolution_rows + j])[k] * 255);
                 }
-                if(((float*) pixel_colours[i * scene.resolution_rows + j])[k] > 1) {
-                    ((float*) pixel_colours[i * scene.resolution_rows + j])[k] = 1;
-                }
-                pixels[i * scene.resolution_rows * 3 + j * 3 + k] = (unsigned char) (((float*) pixel_colours[i * scene.resolution_rows + j])[k] * 255.9f);
             }
         }
     }
-        //string temp = scene.output;
-    }
-    save_imageP6(scene.resolution_rows, scene.resolution_cols, scene.output.c_str(),pixels);                                                               
+    save_imageP6(scene.resolution_rows, scene.resolution_cols, scene.output.c_str(),pixels);                                                            
     return;
-
 }
 
 int main(int argc, char *argv[]) {
